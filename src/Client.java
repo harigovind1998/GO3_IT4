@@ -66,14 +66,18 @@ public class Client {
 	 * @param format
 	 */
 	public void writeFile(String name, String format) {
-
+		File f = new File("./Client/"+name);
+		if(!(f.exists() && !f.isDirectory())) { 
+		    area.append("File does not exit, Please try again with correct file name\n");
+		    return;
+		}
 		byte[] msg =com.generateMessage(wrq, name, format);
 		DatagramPacket sendPacket = com.createPacket(516);
 		DatagramPacket recievePacket = com.createPacket(100);
 
 
 		sendPacket = com.createPacket(msg, interHostPort); //creating the datagram, specifying the destination port and message
-
+		
 		byte[] fileAsByteArr = com.readFileIntoArray("./Client/"+name);
 		int blockNum = 0;
 		int tries = 0;
@@ -124,7 +128,7 @@ public class Client {
 									break innerSend;
 								}
 								msg = com.parseForError(recievePacket);
-
+								int err = com.checkIncomingError(recievePacket);
 								if(msg != null) {
 									if(msg[3]==4) {
 										sendPacket = com.createPacket(msg,interHostPort);
@@ -159,15 +163,54 @@ public class Client {
 										}
 										break mainLoop;
 									}
-								}else if (com.getPacketType(recievePacket)==5){
-									if(recievePacket.getData()[3]==4){
-										area.append("Error Code 4 received. Terminating connection\n");
-										break mainLoop;
-									}else if(recievePacket.getData()[3]==5) {
-										area.append("Connection with original server lost. Terminating connection");
-										break mainLoop;
-									}
+								}else if(err!= -1) { //If it an error packet, do things accordingly
+										switch (err){
+											case 0:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 0");
+												}
+												break mainLoop;
+											case 1:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 1");
+												}
+												break mainLoop;
+											case 2:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 2");
+												}
+												break mainLoop;
+											case 3:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 3");
+												}
+												break mainLoop;
+											case 4:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 4");
+												}
+												break mainLoop;
+											case 5:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 5");
+												}
+												break mainLoop;
+											case 6:
+												if(mode ==1) {
+													area.append("Terminating due to receiving error packet 6");
+												}
+												break mainLoop;
+										}
 								}
+//										else if (com.getPacketType(recievePacket)==5){
+//									if(recievePacket.getData()[3]==4){
+//										area.append("Error Code 4 received. Terminating connection\n");
+//										break mainLoop;
+//									}else if(recievePacket.getData()[3]==5) {
+//										area.append("Connection with original server lost. Terminating connection");
+//										break mainLoop;
+//									}
+//								}
 							}
 						break outterSend; //DataPacket sent and the right AckReceived hence continues on to the next packet
 
@@ -242,6 +285,9 @@ public class Client {
 					break innerLoop;
 				}
 				
+				
+				
+				
 				msg = com.parseForError(recievePacket);
 				if(msg != null) {
 					if(msg[3]==4) {
@@ -252,11 +298,13 @@ public class Client {
 							area.append("Terminating connection.\n");
 						}
 						break outerloop;
+					}else if(msg[3]==1) {
+						
 					}
 				}
 				
-				
-				//messageReceived = recievePacket.getData();
+				int err = com.checkIncomingError(recievePacket)
+;				//messageReceived = recievePacket.getData();
 				//Add check  to see if the packet is a data Packet
 				incomingBlock[0] =  recievePacket.getData()[2];
 				incomingBlock[1] = recievePacket.getData()[3];
@@ -292,14 +340,53 @@ public class Client {
 					if(mode==1) {
 						area.append("Received duplicate Data packet\n");
 					}
-				}else if(com.getPacketType(recievePacket) == 5) { //If it an error packet, do things accordingly 
-					if(recievePacket.getData()[2]==0 && recievePacket.getData()[3]==5) {
-						area.append("Terminating due to receiving error packet 5");
-						break outerloop;
-					}if(recievePacket.getData()[2]==0 && recievePacket.getData()[3]==4) {
-						area.append("Terminating due to receiving error packet  4");
-						break outerloop;
+				}else if(err!= -1) { //If it an error packet, do things accordingly
+					switch (err){
+						case 0:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 0");
+							}
+							break outerloop;
+						case 1:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 1");
+							}
+							break outerloop;
+						case 2:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 2");
+							}
+							break outerloop;
+						case 3:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 3");
+							}
+							break outerloop;
+						case 4:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 4");
+							}
+							break outerloop;
+						case 5:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 5");
+							}
+							break outerloop;
+						case 6:
+							if(mode ==1) {
+								area.append("Terminating due to receiving error packet 6");
+							}
+							break outerloop;
 					}
+//					if(recievePacket.getData()[2]==0 && recievePacket.getData()[3]==5) {
+//						area.append("Terminating due to receiving error packet 5");
+//						break outerloop;
+//					}else if(recievePacket.getData()[2]==0 && recievePacket.getData()[3]==4) {
+//						area.append("Terminating due to receiving error packet  4");
+//						break outerloop;
+//					}else if(recievePacket.getData()[2]==0 && recievePacket.getData()[3]==3) {
+//						
+//					}
 				}else if(!(com.getPacketType(recievePacket)==5)) {
 					msg  = com.generateErrMessage(new byte[] {0,4},"");
 					sendPacket = com.createPacket(msg, interHostPort);

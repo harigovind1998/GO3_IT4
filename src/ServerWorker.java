@@ -64,6 +64,21 @@ public class ServerWorker extends Thread {
 	 * Sends the contents over to the client
 	 */
 	private void readServe() {
+		byte[] msg;
+		File f = new File("./Slient/"+fileName);
+		if(!(f.exists() && !f.isDirectory())) { 
+		    if(mode==1) {
+		    	System.out.println("File does not exit, sending error packet to client");
+		    }
+		    msg = com.generateErrMessage(new byte[] {0,1},"");
+		    SendingResponse = com.createPacket(msg, interHostPort);
+		    com.sendPacket(SendingResponse,SendRecieveSocket);
+		    if(mode==1) {
+		    	System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+		    }
+		    return;
+		}
 
 		byte [] fileByteReadArray = com.readFileIntoArray("./Server/" + fileName);
 		int blockNum = 1;
@@ -71,7 +86,7 @@ public class ServerWorker extends Thread {
 		int tries = 0;
 		mainLoop:
 			while(true){
-				byte[] msg = com.generateDataPacket(com.intToByte(blockNum), com.getBlock(blockNum, fileByteReadArray));
+				msg = com.generateDataPacket(com.intToByte(blockNum), com.getBlock(blockNum, fileByteReadArray));
 				RecievedResponse = com.createPacket(100);
 				SendingResponse = com.createPacket(msg, interHostPort);
 				//Loop that is in charge of sending/resending the data packet
@@ -115,7 +130,7 @@ public class ServerWorker extends Thread {
 								}
 
 								msg = com.parseForError(RecievedResponse);
-
+								int err = com.checkIncomingError(RecievedResponse);
 								if(msg != null) {
 									if(msg[3]==4) {
 										SendingResponse= com.createPacket(msg,interHostPort);
@@ -155,15 +170,55 @@ public class ServerWorker extends Thread {
 										}
 										break mainLoop;
 									}
-								}else if (com.getPacketType(RecievedResponse)==5){
-									if(RecievedResponse.getData()[3]==4){
-										System.out.println("Error Code 4 received. Terminating connection\n");
+								}else if(err!= -1) { //If it an error packet, do things accordingly
+									switch (err){
+									case 0:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 0");
+										}
 										break mainLoop;
-									}else if(RecievedResponse.getData()[3]==5) {
-										System.out.println("Connection with original server lost. Terminating connection");
+									case 1:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 1");
+										}
 										break mainLoop;
-									}
+									case 2:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 2");
+										}
+										break mainLoop;
+									case 3:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 3");
+										}
+										break mainLoop;
+									case 4:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 4");
+										}
+										break mainLoop;
+									case 5:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 5");
+										}
+										break mainLoop;
+									case 6:
+										if(mode ==1) {
+											System.out.println("Terminating due to receiving error packet 6");
+										}
+										break mainLoop;
 								}
+						}
+								
+//								else if (com.getPacketType(RecievedResponse)==5){
+//									if(RecievedResponse.getData()[3]==4){
+//										System.out.println("Error Code 4 received. Terminating connection\n");
+//										break mainLoop;
+//									}else if(RecievedResponse.getData()[3]==5) {
+//										System.out.println("Connection with original server lost. Terminating connection");
+//										break mainLoop;
+//									}
+//								}
 							}
 
 
@@ -237,7 +292,7 @@ public class ServerWorker extends Thread {
 							}
 							
 							msg = com.parseForError(RecievedResponse);
-							
+							int err = com.checkIncomingError(RecievedResponse);
 							if(msg!= null) {
 								if(msg[3]==4) { //if the Packet received was the wrong format, send the error to the client and close connection
 									SendingResponse = com.createPacket(msg,interHostPort);
@@ -280,13 +335,43 @@ public class ServerWorker extends Thread {
 								if(mode==1) {
 									System.out.println("Received duplicate Data packet");
 								}
-							}else if(com.getPacketType(RecievedResponse) == 5) { //If it an error packet, do things accordingly 
-								if(RecievedResponse.getData()[2]==0 && RecievedResponse.getData()[3]==5) {
-									System.out.println("Terminating due to receiving error packet 5");
-									break writeLoop;
-								}if(RecievedResponse.getData()[2]==0 && RecievedResponse.getData()[3]==4) {
-									System.out.println("Terminating due to receiving error packet  4");
-									break writeLoop;
+							}else if(err!= -1) { //If it an error packet, do things accordingly
+								switch (err){
+								case 0:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 0");
+									}
+									break mainLoop;
+								case 1:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 1");
+									}
+									break mainLoop;
+								case 2:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 2");
+									}
+									break mainLoop;
+								case 3:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 3");
+									}
+									break mainLoop;
+								case 4:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 4");
+									}
+									break mainLoop;
+								case 5:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 5");
+									}
+									break mainLoop;
+								case 6:
+									if(mode ==1) {
+										System.out.println("Terminating due to receiving error packet 6");
+									}
+									break mainLoop;
 								}
 							}else if(!(com.getPacketType(RecievedResponse)==5)) {
 								msg  = com.generateErrMessage(new byte[] {0,4},"");
@@ -297,6 +382,19 @@ public class ServerWorker extends Thread {
 								}
 								break writeLoop;
 							}
+							
+							
+							
+							
+//							else if(com.getPacketType(RecievedResponse) == 5) { //If it an error packet, do things accordingly 
+//								if(RecievedResponse.getData()[2]==0 && RecievedResponse.getData()[3]==5) {
+//									System.out.println("Terminating due to receiving error packet 5");
+//									break writeLoop;
+//								}if(RecievedResponse.getData()[2]==0 && RecievedResponse.getData()[3]==4) {
+//									System.out.println("Terminating due to receiving error packet  4");
+//									break writeLoop;
+//								}
+							
 						}
 					break mainLoop; //block was written in to file so the server can send the ack packet and start listening for n+1 packet
 					

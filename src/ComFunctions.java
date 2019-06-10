@@ -669,6 +669,16 @@ public class ComFunctions {
 //		
 //	}
 	
+	
+	public int checkIncomingError(DatagramPacket packet) {
+		int err = -1;
+		byte[] data = packet.getData();
+		if(data[0]==0 && data[1]==5) {
+			err= data[3];
+		}
+		return -1;
+	}
+	
 	public byte[] parseMode(byte[] msg) {
 		int count = 0;
 		int modeIndex = 0;

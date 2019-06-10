@@ -1,9 +1,11 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,18 +69,51 @@ public class Client {
 	 */
 	public void writeFile(String name, String format) {
 		File f = new File("./Client/"+name);
+//		f.setWritable(false);
+//		f.setReadable(false);
 		if(!(f.exists() && !f.isDirectory())) { 
-		    area.append("File does not exit, Please try again with correct file name\n");
+		    if(mode  == 1) {
+		    	area.append("File does not exit, Please try again with correct file name\n");
+		    }
 		    return;
 		}
 		byte[] msg =com.generateMessage(wrq, name, format);
 		DatagramPacket sendPacket = com.createPacket(516);
 		DatagramPacket recievePacket = com.createPacket(100);
-
+		
 
 		sendPacket = com.createPacket(msg, interHostPort); //creating the datagram, specifying the destination port and message
+		//byte[] fileAsByteArr = com.readFileIntoArray("./Client/"+name);
+		byte[] fileAsByteArr = null;
+		try{
+			//fileAsByteArr = Files.readAllBytes(Paths.get("./Client/" + name));
+			fileAsByteArr = Files.readAllBytes(f.toPath());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			if(mode==1) {
+		    	area.append("File does not exist, Please select correct file next time...Exiting...\n");
+		    }
+		    return;
+		} catch (AccessDeniedException e) {
+			if(mode==1) {
+				area.append("File access violation...Exiting...\n");
+			}
+			return;
+		}catch(IOException e) {
+			String temp = com.getStackTrace(e);
+			if(temp.toLowerCase().contains("space")) {
+				if(mode ==1) {
+					area.append("Not enough space on disk...Exiting...\n");
+				}
+			}else {
+				if(mode == 1) {
+					e.printStackTrace();
+					area.append(e+"WHATTTTTT\n");
+				}
+			}
+			return;
+		}
 		
-		byte[] fileAsByteArr = com.readFileIntoArray("./Client/"+name);
 		int blockNum = 0;
 		int tries = 0;
 		mainLoop:
@@ -145,8 +180,8 @@ public class Client {
 										if(sendPacket.getLength() < 512 && sendPacket.getData()[1] == 3 ){ //Checks to see if the file has come to an end
 											area.append("End of File reached!\n");
 											break mainLoop;
-										}	
-										blockNum ++ ;
+										}
+										blockNum ++;
 										msg = com.generateDataPacket(com.intToByte(blockNum), com.getBlock(blockNum, fileAsByteArr));
 										sendPacket = com.createPacket(msg, interHostPort);
 										break innerSend;
@@ -230,18 +265,39 @@ public class Client {
 		byte[] msg = com.generateMessage(rrq, name, format);
 		byte[] incomingBlock =  new byte[2];
 		File yourFile = new File("./Client/" + name);
+		
+		if(yourFile.exists() && !yourFile.isDirectory()) {
+			if(mode == 1) {
+				area.append("File already exits, cant over write it, please select another file...Exiting...\n");
+			}
+		    return;
+		}
+		
 		try {
 			yourFile.createNewFile();
-		} catch (Exception e) {
-			//Can use this to create I/O error packets
+		} catch (AccessDeniedException e) {
 			e.printStackTrace();
+			if(mode == 1) {
+				area.append("File cannot be created due to Folder restrictions, please acquire access  and  trya gain...Exiting...\n");
+			}
+			return;
+		}catch (IOException f) {
+			if(com.getStackTrace(f).toLowerCase().contains("space")) {// && (f.getMessage().toLowerCase().contains("no")||f.getMessage().toLowerCase().contains("not"))) {
+			    if(mode==1) {
+			    	area.append("Not enough space in on disk to create new file...Exiting...\n");
+			    }
+			}else {
+				if(mode  == 1) {
+					area.append(f.getMessage() + "...Exiting...\n");
+				}
+			}
+			return;
 		}
 		f2path = Paths.get("./Client/" + name);
 		DatagramPacket sendPacket = com.createPacket(msg, interHostPort); //creating the datagram, specifying the destination port and message
 		
 		DatagramPacket recievePacket =  com.createPacket(516);
 		byte[] dataReceived = null;
-		int last;
 		int blockNum = 1;
 		int tries = 0;
 		outerloop:
@@ -285,9 +341,6 @@ public class Client {
 					break innerLoop;
 				}
 				
-				
-				
-				
 				msg = com.parseForError(recievePacket);
 				if(msg != null) {
 					if(msg[3]==4) {
@@ -311,8 +364,41 @@ public class Client {
 				
 				if((blockNum == ByteBuffer.wrap(incomingBlock).getShort()) && com.getPacketType(recievePacket) == 3) {
 					dataReceived = com.parseBlockData(recievePacket);		
-					com.writeArrayIntoFile(dataReceived, f2path);
-					area.append("writing to file\n");
+					//com.writeArrayIntoFile(dataReceived, f2path);
+					try {
+						Files.write(f2path, dataReceived, StandardOpenOption.APPEND);
+						//Files.write();
+					} catch (AccessDeniedException e) {
+						e.printStackTrace();
+						msg = com.generateErrMessage(new byte[] {0,2}, "File cannot be written into due to file restrictions");
+						sendPacket = com.createPacket(msg, interHostPort);
+						com.sendPacket(sendPacket, sendReceiveSocket);
+						if(mode == 1) {
+							System.out.println(com.verboseMode("Sending", sendPacket));
+					    	System.out.println("Terminating server");
+						}
+						return;
+					}catch(FileNotFoundException file) {
+						msg = com.generateErrMessage(new byte[] {0,1}, "File not found");
+						sendPacket = com.createPacket(msg, interHostPort);
+						com.sendPacket(sendPacket, sendReceiveSocket);
+						if(mode == 1) {
+							System.out.println(com.verboseMode("Sending", sendPacket));
+					    	System.out.println("Terminating server");
+						}
+						return;
+					}catch (IOException f) {
+						if(com.getStackTrace(f).toLowerCase().contains("space")) {// && (f.getMessage().toLowerCase().contains("no")||f.getMessage().toLowerCase().contains("not"))) {
+							msg =com.generateErrMessage(new byte[] {0,3},"Not enough space");
+							sendPacket = com.createPacket(msg, interHostPort);
+							com.sendPacket(sendPacket,sendReceiveSocket);
+						    if(mode==1) {
+						    	System.out.println(com.verboseMode("Sending", sendPacket));
+						    	System.out.println("Terminating server");
+						    }
+						    return;
+						}
+					}
 					msg = com.generateAckMessage(com.intToByte(blockNum));
 					sendPacket = com.createPacket(msg, interHostPort);
 					blockNum++;
@@ -402,6 +488,8 @@ public class Client {
 	}
 	
 	public static void main(String[] args) {
+		
+		
 		
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Select Mode : Quiet [0], Verbose [1]");

@@ -719,5 +719,12 @@ public class ComFunctions {
 		}
 		return modeAsByteArr;
 	}
+	
+	public String getStackTrace(Throwable throwable) {
+	    Writer result = new StringWriter();
+	    PrintWriter printWriter = new PrintWriter(result);
+	    throwable.printStackTrace(printWriter);
+	    return result.toString();
+	  }
 }
 

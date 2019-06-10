@@ -1,10 +1,14 @@
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
 public class ServerWorker extends Thread {
@@ -66,9 +70,18 @@ public class ServerWorker extends Thread {
 	private void readServe() {
 		byte[] msg;
 		File f = new File("./Slient/"+fileName);
-		if(!(f.exists() && !f.isDirectory())) { 
-		    if(mode==1) {
-		    	System.out.println("File does not exit, sending error packet to client");
+//		if(!(f.exists() && !f.isDirectory())) { 
+//		    
+//		}
+
+		byte [] fileByteReadArray = com.readFileIntoArray("./Server/" + fileName);
+		
+		try{
+			fileByteReadArray = Files.readAllBytes(Paths.get("./Server" + fileName));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			if(mode==1) {
+		    	System.out.println("File cannot be found, sending error packet to client");
 		    }
 		    msg = com.generateErrMessage(new byte[] {0,1},"");
 		    SendingResponse = com.createPacket(msg, interHostPort);
@@ -78,9 +91,28 @@ public class ServerWorker extends Thread {
 		    	System.out.println("Terminating server");
 		    }
 		    return;
+		} catch (AccessDeniedException e) {
+			e.printStackTrace();
+			msg = com.generateErrMessage(new byte[] {0,2}, "File cannot be read due to file restrictions");
+			SendingResponse = com.createPacket(msg, interHostPort);
+			com.sendPacket(SendingResponse, SendRecieveSocket);
+			if(mode == 1) {
+				System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+			}
+			return;
+		}catch(IOException e) {
+			msg = com.generateErrMessage(new byte[] {0,0}, e.getMessage());
+			SendingResponse = com.createPacket(msg, interHostPort);
+			com.sendPacket(SendingResponse, SendRecieveSocket);
+			if(mode == 1) {
+				System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+			}
+			return;
 		}
-
-		byte [] fileByteReadArray = com.readFileIntoArray("./Server/" + fileName);
+		
+		
 		int blockNum = 1;
 		//Keeps looping until it is the entire file has been sent over
 		int tries = 0;
@@ -231,14 +263,47 @@ public class ServerWorker extends Thread {
 	 */
 	private void writeServe(){
 		File yourFile = new File("./Server/" + fileName);
+		byte[] msg = null;
+		if(yourFile.exists() && !yourFile.isDirectory()) {
+			if(mode == 1) {
+				System.out.println("File already exits, creating Error Packet");
+			}
+			msg = com.generateErrMessage(new byte[] {0,6},"Trying to write into a file that already exits");
+			SendingResponse = com.createPacket(msg, interHostPort);
+			com.sendPacket(SendingResponse,SendRecieveSocket);
+		    if(mode==1) {
+		    	System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+		    }
+		    return;
+		}
 		//If the specified file doesn't exit, it will create it
 		try {
 			yourFile.createNewFile();
-		} catch (Exception e) {
+		} catch (AccessDeniedException e) {
 			e.printStackTrace();
-			System.exit(0);
+			msg = com.generateErrMessage(new byte[] {0,2}, "File cannot be created due to  folder restrictions");
+			SendingResponse = com.createPacket(msg, interHostPort);
+			com.sendPacket(SendingResponse, SendRecieveSocket);
+			if(mode == 1) {
+				System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+			}
+			return;
+		}catch (IOException f) {
+			if(com.getStackTrace(f).toLowerCase().contains("space")) {// && (f.getMessage().toLowerCase().contains("no")||f.getMessage().toLowerCase().contains("not"))) {
+				msg =com.generateErrMessage(new byte[] {0,3},"Not enough space");
+				SendingResponse = com.createPacket(msg, interHostPort);
+				com.sendPacket(SendingResponse,SendRecieveSocket);
+			    if(mode==1) {
+			    	System.out.println(com.verboseMode("Sending", SendingResponse));
+			    	System.out.println("Terminating server");
+			    }
+			    return;
+			}
+			
 		}
-		byte[] msg = null;
+		
 		int blockNum = 0;
 		byte[] incomingBlock = new byte[2];
 		int last;
@@ -308,7 +373,43 @@ public class ServerWorker extends Thread {
 							incomingBlock[0] = RecievedResponse.getData()[2];
 							incomingBlock[1] = RecievedResponse.getData()[3];
 							if((blockNum == ByteBuffer.wrap(incomingBlock).getShort()) && com.getPacketType(RecievedResponse) == 3) {
-								com.writeArrayIntoFile(com.parseBlockData(RecievedResponse), Paths.get("./Server/" + fileName));
+								try {
+									Files.write(Paths.get("./Server/"+fileName), com.parseBlockData(RecievedResponse), StandardOpenOption.APPEND);
+								} catch (AccessDeniedException e) {
+									e.printStackTrace();
+									msg = com.generateErrMessage(new byte[] {0,2}, "File cannot written into due to file restrictions");
+									SendingResponse = com.createPacket(msg, interHostPort);
+									com.sendPacket(SendingResponse, SendRecieveSocket);
+									if(mode == 1) {
+										System.out.println(com.verboseMode("Sending", SendingResponse));
+								    	System.out.println("Terminating server");
+									}
+									return;
+								}catch(FileNotFoundException file) {
+									msg = com.generateErrMessage(new byte[] {0,1}, "File not found");
+									SendingResponse = com.createPacket(msg, interHostPort);
+									com.sendPacket(SendingResponse, SendRecieveSocket);
+									if(mode == 1) {
+										System.out.println(com.verboseMode("Sending", SendingResponse));
+								    	System.out.println("Terminating server");
+									}
+									return;
+								}catch (IOException f) {
+									if(com.getStackTrace(f).toLowerCase().contains("space")) {// && (f.getMessage().toLowerCase().contains("no")||f.getMessage().toLowerCase().contains("not"))) {
+										msg =com.generateErrMessage(new byte[] {0,3},"Not enough space");
+										SendingResponse = com.createPacket(msg, interHostPort);
+										com.sendPacket(SendingResponse,SendRecieveSocket);
+									    if(mode==1) {
+									    	System.out.println(com.verboseMode("Sending", SendingResponse));
+									    	System.out.println("Terminating server");
+									    }
+									    return;
+									}
+								}
+								
+								
+								
+								//com.writeArrayIntoFile(com.parseBlockData(RecievedResponse), Paths.get("./Server/" + fileName)); // /AccessViolation/file.txt
 								last = RecievedResponse.getData()[RecievedResponse.getLength() -1];
 								msg = com.generateAckMessage(com.intToByte(blockNum));
 								SendingResponse = com.createPacket(msg, interHostPort);

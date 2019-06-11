@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.nio.ByteBuffer;
@@ -19,6 +23,7 @@ public class IntermediateHost {
 	private static int simulation; // 0 = no errors, 1 = lose data packet, 2 = delay packet, 3 = duplicate packet
 	private static int dup;
 	private int packetCounter = 1;
+	private File yourFile;
 	
 	/**
 	 * Waits to receive a message from the client and passes that on to the server
@@ -554,9 +559,12 @@ public class IntermediateHost {
 						}
 					
 						}
+				case 8:
+					if(packetCounter == packetNumber) {
+						yourFile.setReadable(false);
+						yourFile.setWritable(false);
 					}
-					
-					
+				}		
 		}
 	
 	
@@ -567,11 +575,11 @@ public class IntermediateHost {
 		System.out.println("Select Mode : Quiet [0], Verbose [1]");
 		mode = sc1.nextInt();
 		
-		System.out.println("Select Mode : Normal [0], Lost Packet [1], Delayed Packet [2], Duplicate Packet [3], Damage entire Packet [4], Damage WRQ/RRQ packet [5], Damage ACK/DATA packet[6], Lose last ACK packet[7] ");
+		System.out.println("Select Mode : Normal [0], Lost Packet [1], Delayed Packet [2], Duplicate Packet [3], Damage entire Packet [4], Damage WRQ/RRQ packet [5], Damage ACK/DATA packet[6], Lose last ACK packet[7], Access Violation [8]");
 		simulation = sc1.nextInt();
 		
 		
-		if(simulation != 0 && simulation !=7) {
+		if(simulation != 0 && simulation !=7 && simulation != 8) {
 			System.out.println("Which packet would you like to simulate the error (ignore for Damage WRQ/RRQ damage as it will be the first packet");
 			packetNumber = sc1.nextInt();
 			
@@ -584,7 +592,7 @@ public class IntermediateHost {
 				System.out.println("How many times would you like to duplicate this packet?");
 				dup = sc1.nextInt();
 				
-			}else if(simulation ==5) {
+			}else if(simulation == 5) {
 				System.out.println("Currupt: opCode[1], mode[2], delete 0's [3]");
 				dup =  sc1.nextInt();
 			}else if(simulation == 6) {
@@ -592,8 +600,26 @@ public class IntermediateHost {
 				dup =  sc1.nextInt();
 				System.out.println("How do you want to corrupt it: miss block [1], Destroy format[2]");
 				packetDelay = sc1.nextInt();
+			}else if(simulation == 8) {
+				System.out.println("What file name would you like to have an access violation with .txt");
+		        BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+		        String fileName = null;
+				try {
+					fileName = reader.readLine();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+				yourFile = new File("./Client/" + fileName);
+				try {
+					yourFile.createNewFile();
+				} catch (Exception e) {
+					//Can use this to create I/O error packets
+					e.printStackTrace();
+				}
 			}
 		}
+		
 		sc1.close();
 		com = new ComFunctions();
 		sendRecieveSocket = com.startSocket(interHostPort);

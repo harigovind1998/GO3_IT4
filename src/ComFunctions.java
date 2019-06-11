@@ -621,52 +621,62 @@ public class ComFunctions {
 	}
 	
 	
-	public byte[] parseForError(DatagramPacket packet) {
+//	public byte[] parseForError(DatagramPacket packet) {
+//		byte[] data = packet.getData();
+//		byte[] type = parsePacketType(data);
+//		int len = packet.getLength();
+//
+//		if ((type[0] == 0 && type[1] == 1) || (type[0] == 0 && type[1] == 2)) {
+//			if(checkRequestFormat(data)) {
+//				return null;
+//			}else {
+//				byte[] errCode = new byte[2];
+//				errCode = intToByte(4);
+//				return generateErrMessage(errCode, "RRQ or WRQ incorrect");
+//			}
+//		} else if(type[0] == 0 && type[1] == 3) {
+//			//checking block number
+//			if(data[2] == (byte)0 && data[3] == (byte)0) {
+//				byte[] errCode = new byte[2];
+//				errCode = intToByte(4);
+//				return generateErrMessage(errCode, "Invalid block number. Attempted block number: 00");
+//			}
+//			return null;
+//		} else if (type[0] == 0 && type[1] == 4) {
+//
+//			if(packet.getLength()!= 4) {
+//				System.out.print(packet.getLength());
+//				byte[] errCode = new byte[2];
+//				errCode = intToByte(4);
+//				return generateErrMessage(errCode, "Length of ACK Packet is not 4 bytes");
+//			}
+//			return null;
+//		} else if (type[0] == 0 && type[1] == 5) {
+//			int lastIndexOfPacket = data[len - 1];
+//			if(lastIndexOfPacket != (byte)0 || len<4) {
+//				byte[] errCode = new byte[2];
+//				errCode = intToByte(4);
+//				return generateErrMessage(errCode, "Error Packet does not end with byte 0");
+//			} 
+//			return null;
+//		}else {
+//			//other operation codes
+//			byte[] errCode = new byte[2];
+//			errCode = intToByte(4);
+//			String typeAsString = new String(type);
+//			return generateErrMessage(errCode, "Type: " + typeAsString + " is an invalid TFTP operation");
+//		}
+//		
+//	}
+	
+	
+	public int checkIncomingError(DatagramPacket packet) {
+		int err = -1;
 		byte[] data = packet.getData();
-		byte[] type = parsePacketType(data);
-		int len = packet.getLength();
-
-		if ((type[0] == 0 && type[1] == 1) || (type[0] == 0 && type[1] == 2)) {
-			if(checkRequestFormat(data)) {
-				return null;
-			}else {
-				byte[] errCode = new byte[2];
-				errCode = intToByte(4);
-				return generateErrMessage(errCode, "RRQ or WRQ incorrect");
-			}
-		} else if(type[0] == 0 && type[1] == 3) {
-			//checking block number
-			if(data[2] == (byte)0 && data[3] == (byte)0) {
-				byte[] errCode = new byte[2];
-				errCode = intToByte(4);
-				return generateErrMessage(errCode, "Invalid block number. Attempted block number: 00");
-			}
-			return null;
-		} else if (type[0] == 0 && type[1] == 4) {
-
-			if(packet.getLength()!= 4) {
-				System.out.print(packet.getLength());
-				byte[] errCode = new byte[2];
-				errCode = intToByte(4);
-				return generateErrMessage(errCode, "Length of ACK Packet is not 4 bytes");
-			}
-			return null;
-		} else if (type[0] == 0 && type[1] == 5) {
-			int lastIndexOfPacket = data[len - 1];
-			if(lastIndexOfPacket != (byte)0 || len<4) {
-				byte[] errCode = new byte[2];
-				errCode = intToByte(4);
-				return generateErrMessage(errCode, "Error Packet does not end with byte 0");
-			} 
-			return null;
-		}else {
-			//other operation codes
-			byte[] errCode = new byte[2];
-			errCode = intToByte(4);
-			String typeAsString = new String(type);
-			return generateErrMessage(errCode, "Type: " + typeAsString + " is an invalid TFTP operation");
+		if(data[0]==0 && data[1]==5) {
+			err= data[3];
 		}
-		
+		return -1;
 	}
 	
 	public byte[] parseMode(byte[] msg) {
@@ -709,5 +719,12 @@ public class ComFunctions {
 		}
 		return modeAsByteArr;
 	}
+	
+	public String getStackTrace(Throwable throwable) {
+	    Writer result = new StringWriter();
+	    PrintWriter printWriter = new PrintWriter(result);
+	    throwable.printStackTrace(printWriter);
+	    return result.toString();
+	  }
 }
 

@@ -440,9 +440,9 @@ public class ComFunctions {
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)2) {
 			verbose += "WRQ; " + getFileName(packetData) + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)3) {
-			byte[] blockNum = new byte[2];
-			blockNum[0] = packetData[2];
-			blockNum[1] = packetData[3];
+			byte[] blockNum = new byte[] {0,0,0,0};
+			blockNum[2] = packetData[2];
+			blockNum[3] = packetData[3];
 //			int byteCounter = 0;
 //			byte[] fileBlock = parseBlockData(packetData);
 //			for(byte b: fileBlock) {
@@ -450,14 +450,19 @@ public class ComFunctions {
 //					byteCounter++;
 //				}
 //			}
-			verbose += "DATA; BlockNumber: " + ByteBuffer.wrap(blockNum).getShort() + "; Numer of Bytes: " + packet.getLength() + "\n";     
+			verbose += "DATA; BlockNumber: " + ByteBuffer.wrap(blockNum).getInt() + "; Numer of Bytes: " + packet.getLength() + "\n";     
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)4) {
-			byte[] blockNum = new byte[2];
-			blockNum[0] = packetData[2];
-			blockNum[1] = packetData[3];
-			verbose += "ACK; BlockNumber: " + ByteBuffer.wrap(blockNum).getShort() + "\n";
+			byte[] blockNum = new byte[] {0,0,0,0};
+			blockNum[2] = packetData[2];
+			blockNum[3] = packetData[3];
+			verbose += "ACK; BlockNumber: " + ByteBuffer.wrap(blockNum).getInt() + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)5) {
-			verbose += "ERROR\n";
+			verbose += "Error Packet with code : 0" + checkIncomingError(packet) + "\nWith message: ";
+			byte[] temp = new byte[packet.getLength()-4];
+			for(int i = 4; i < packet.getLength() ; i++) {
+				temp[i-4] = packet.getData()[i];
+			}
+			verbose += new String(temp) + "\n";
 		}
 		verbose += "\n";
 		a.append(verbose);
@@ -479,9 +484,9 @@ public class ComFunctions {
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)2) {
 			verbose += "WRQ; " + getFileName(packetData) + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)3) {
-			byte[] blockNum = new byte[2];
-			blockNum[0] = packetData[2];
-			blockNum[1] = packetData[3];
+			byte[] blockNum = new byte[] {0,0,0,0};
+			blockNum[2] = packetData[2];
+			blockNum[3] = packetData[3];
 //			int byteCounter = 0;
 //			byte[] fileBlock = parseBlockData(packetData);
 //			for(byte b: fileBlock) {
@@ -489,14 +494,19 @@ public class ComFunctions {
 //					byteCounter++;
 //				}
 //			}
-			verbose += "DATA; BlockNumber: " + ByteBuffer.wrap(blockNum).getShort() + "; Numer of Bytes: " + packet.getLength() + "\n";     
+			verbose += "DATA; BlockNumber: " + ByteBuffer.wrap(blockNum).getInt() + "; Numer of Bytes: " + packet.getLength() + "\n";     
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)4) {
-			byte[] blockNum = new byte[2];
-			blockNum[0] = packetData[2];
-			blockNum[1] = packetData[3];
-			verbose += "ACK; BlockNumber: " + ByteBuffer.wrap(blockNum).getShort() + "\n";
+			byte[] blockNum = new byte[] {0,0,0,0};
+			blockNum[2] = packetData[2];
+			blockNum[3] = packetData[3];
+			verbose += "ACK; BlockNumber: " + ByteBuffer.wrap(blockNum).getInt() + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)5) {
-			verbose += "ERROR\n";
+			verbose += "Error Packet with code : 0" + checkIncomingError(packet) + "\nWith message: ";
+			byte[] temp = new byte[packet.getLength()-4];
+			for(int i = 4; i < packet.getLength() ; i++) {
+				temp[i-4] = packet.getData()[i];
+			}
+			verbose += new String(temp) + "\n";
 		}
 		return verbose;
 	}
@@ -676,7 +686,7 @@ public class ComFunctions {
 		if(data[0]==0 && data[1]==5) {
 			err= data[3];
 		}
-		return -1;
+		return err;
 	}
 	
 	public byte[] parseMode(byte[] msg) {

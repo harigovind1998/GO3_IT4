@@ -70,6 +70,7 @@ public class ServerWorker extends Thread {
 	private void readServe() {
 		byte[] msg;
 		File f = new File("./Slient/"+fileName);
+		byte[] incomingBlock =  new byte[] {0,0,0,0};
 //		if(!(f.exists() && !f.isDirectory())) { 
 //		    
 //		}
@@ -105,6 +106,18 @@ public class ServerWorker extends Thread {
 			msg = com.generateErrMessage(new byte[] {0,0}, e.getMessage());
 			SendingResponse = com.createPacket(msg, interHostPort);
 			com.sendPacket(SendingResponse, SendRecieveSocket);
+			if(mode == 1) {
+				System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println("Terminating server");
+			}
+			return;
+		}
+		
+		if(fileByteReadArray.length / 512 > 65535) {
+			System.out.println("File too big to transfering...Exiting...\n");
+			msg = com.generateErrMessage(new byte[] {0,0}, "File too large to transfer");
+			SendingResponse = com.createPacket(msg, interHostPort);
+			com.sendPacket(SendingResponse,SendRecieveSocket);
 			if(mode == 1) {
 				System.out.println(com.verboseMode("Sending", SendingResponse));
 		    	System.out.println("Terminating server");
@@ -174,7 +187,10 @@ public class ServerWorker extends Thread {
 										break mainLoop;
 									}
 								}
-
+								
+								
+								incomingBlock[2] =RecievedResponse.getData()[2];
+								incomingBlock[3] =RecievedResponse.getData()[3];
 								
 
 								if(com.getPacketType(RecievedResponse)== 4) {
@@ -189,7 +205,7 @@ public class ServerWorker extends Thread {
 										SendingResponse = com.createPacket(msg, interHostPort);
 										
 										break innerSend;
-									}else if (blockNum > ByteBuffer.wrap(new byte[] {RecievedResponse.getData()[2],RecievedResponse.getData()[3]}).getShort()){
+									}else if (blockNum > ByteBuffer.wrap(incomingBlock).getInt()){
 										System.out.println("Duplicate Block received, continue waiting...\n");
 									}else {
 										msg  = com.generateErrMessage(new byte[] {0,4},"");
@@ -305,7 +321,7 @@ public class ServerWorker extends Thread {
 		}
 		
 		int blockNum = 0;
-		byte[] incomingBlock = new byte[2];
+		byte[] incomingBlock = new byte[] {0,0,0,0};
 		int last;
 		RecievedResponse = com.createPacket(BLOCK_SIZE);
 		SendingResponse = com.createPacket(com.generateAckMessage(com.intToByte(blockNum)), interHostPort);
@@ -370,11 +386,15 @@ public class ServerWorker extends Thread {
 							}
 							
 							//Checks to see if the Data Packet received is the correct packet, if it isn't waits for next incoming packet
-							incomingBlock[0] = RecievedResponse.getData()[2];
-							incomingBlock[1] = RecievedResponse.getData()[3];
-							if((blockNum == ByteBuffer.wrap(incomingBlock).getShort()) && com.getPacketType(RecievedResponse) == 3) {
+							incomingBlock[2] = RecievedResponse.getData()[2];
+							incomingBlock[3] = RecievedResponse.getData()[3];
+							if((blockNum == ByteBuffer.wrap(incomingBlock).getInt()) && com.getPacketType(RecievedResponse) == 3) {
 								try {
-									Files.write(Paths.get("./Server/"+fileName), com.parseBlockData(RecievedResponse), StandardOpenOption.APPEND);
+									if(yourFile.exists() && !yourFile.isDirectory()) {
+										Files.write(Paths.get("./Server/"+fileName), com.parseBlockData(RecievedResponse), StandardOpenOption.APPEND);
+									}else {
+										throw new FileNotFoundException();
+									}
 								} catch (AccessDeniedException e) {
 									e.printStackTrace();
 									msg = com.generateErrMessage(new byte[] {0,2}, "File cannot written into due to file restrictions");
@@ -408,7 +428,6 @@ public class ServerWorker extends Thread {
 								}
 								
 								
-								
 								//com.writeArrayIntoFile(com.parseBlockData(RecievedResponse), Paths.get("./Server/" + fileName)); // /AccessViolation/file.txt
 								last = RecievedResponse.getData()[RecievedResponse.getLength() -1];
 								msg = com.generateAckMessage(com.intToByte(blockNum));
@@ -423,7 +442,7 @@ public class ServerWorker extends Thread {
 								}
 								++blockNum;
 								break innerLoop; //The correct data Packet was received so it leaves the inner loop
-							}else if((blockNum< ByteBuffer.wrap(incomingBlock).getShort()) && com.getPacketType(RecievedResponse) == 3) { // Missed a block
+							}else if((blockNum< ByteBuffer.wrap(incomingBlock).getInt()) && com.getPacketType(RecievedResponse) == 3) { // Missed a block
 								msg  = com.generateErrMessage(new byte[] {0,4},"");
 								SendingResponse = com.createPacket(msg, interHostPort);
 								com.sendPacket(SendingResponse, SendRecieveSocket);

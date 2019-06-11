@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.lang.Math; 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import java.io.FileOutputStream; 
@@ -114,6 +115,11 @@ public class Client {
 			return;
 		}
 		
+		if(fileAsByteArr.length / 512 > 65535) {
+			area.append("File too big to transfering...Exiting...\n");
+			return;
+		}
+		
 		int blockNum = 0;
 		int tries = 0;
 		mainLoop:
@@ -185,7 +191,7 @@ public class Client {
 										msg = com.generateDataPacket(com.intToByte(blockNum), com.getBlock(blockNum, fileAsByteArr));
 										sendPacket = com.createPacket(msg, interHostPort);
 										break innerSend;
-									}else if (blockNum > ByteBuffer.wrap(new byte[] {recievePacket.getData()[2],recievePacket.getData()[3]}).getShort()){
+									}else if (blockNum > ByteBuffer.wrap(new byte[] {recievePacket.getData()[2],recievePacket.getData()[3]}).getInt()){
 										area.append("Duplicate Block received, continue waiting...\n");
 									}else {
 										msg  = com.generateErrMessage(new byte[] {0,4},"");
@@ -263,7 +269,7 @@ public class Client {
 	 */
 	public void readFile(String name, String format) {
 		byte[] msg = com.generateMessage(rrq, name, format);
-		byte[] incomingBlock =  new byte[2];
+		byte[] incomingBlock =  new byte[] {0,0,0,0};
 		File yourFile = new File("./Client/" + name);
 		
 		if(yourFile.exists() && !yourFile.isDirectory()) {
@@ -359,14 +365,18 @@ public class Client {
 				int err = com.checkIncomingError(recievePacket)
 ;				//messageReceived = recievePacket.getData();
 				//Add check  to see if the packet is a data Packet
-				incomingBlock[0] =  recievePacket.getData()[2];
-				incomingBlock[1] = recievePacket.getData()[3];
+				incomingBlock[2] =  recievePacket.getData()[2];
+				incomingBlock[3] = recievePacket.getData()[3];
 				
-				if((blockNum == ByteBuffer.wrap(incomingBlock).getShort()) && com.getPacketType(recievePacket) == 3) {
+				if((blockNum == ByteBuffer.wrap(incomingBlock).getInt()) && com.getPacketType(recievePacket) == 3) {
 					dataReceived = com.parseBlockData(recievePacket);		
 					//com.writeArrayIntoFile(dataReceived, f2path);
 					try {
-						Files.write(f2path, dataReceived, StandardOpenOption.APPEND);
+						if(yourFile.exists() && !yourFile.isDirectory()) {
+							Files.write(f2path, dataReceived, StandardOpenOption.APPEND);
+						}else {
+							throw new FileNotFoundException();
+						}
 						//Files.write();
 					} catch (AccessDeniedException e) {
 						e.printStackTrace();
@@ -413,7 +423,7 @@ public class Client {
 					}
 					
 					break innerLoop; //Right packet has been received
-				}else if((blockNum< ByteBuffer.wrap(incomingBlock).getShort()) &&com.getPacketType(recievePacket) == 3) { // Missed a block
+				}else if((blockNum< ByteBuffer.wrap(incomingBlock).getInt()) &&com.getPacketType(recievePacket) == 3) { // Missed a block
 					msg  = com.generateErrMessage(new byte[] {0,4},"");
 					sendPacket = com.createPacket(msg, interHostPort);
 					com.sendPacket(sendPacket, sendReceiveSocket);
@@ -489,6 +499,17 @@ public class Client {
 	
 	public static void main(String[] args) {
 		
+		frame.addWindowListener(new java.awt.event.WindowAdapter() {
+		    @Override
+		    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+		        if (JOptionPane.showConfirmDialog(frame, 
+		            "Are you sure you want to close this window?", "Close Window?", 
+		            JOptionPane.YES_NO_OPTION,
+		            JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION){
+		            System.exit(0);
+		        }
+		    }
+		});
 		
 		
 		Scanner sc = new Scanner(System.in);

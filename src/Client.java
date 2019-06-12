@@ -32,7 +32,7 @@ public class Client {
 	
 	private static byte[] rrq = {0,1};
 	private static byte[] wrq = {0,2};
-	private static int mode, simMode;
+	private static int mode, simMode, rest;
 	private int interHostPort = 23;
 	private  boolean TIDSet = false;
 	/**
@@ -70,6 +70,10 @@ public class Client {
 	 */
 	public void writeFile(String name, String format) {
 		File f = new File("./Client/"+name);
+		if(rest == 0) {
+			f.setReadable(false);
+			f.setWritable(false);
+		}
 //		f.setWritable(false);
 //		f.setReadable(false);
 		if(!(f.exists() && !f.isDirectory())) { 
@@ -106,17 +110,12 @@ public class Client {
 				if(mode ==1) {
 					area.append("Not enough space on disk...Exiting...\n");
 				}
-			}else {
-				if(mode == 1) {
-					e.printStackTrace();
-					area.append(e+"WHATTTTTT\n");
-				}
 			}
 			return;
 		}
 		
 		if(fileAsByteArr.length / 512 > 65535) {
-			area.append("File too big to transfering...Exiting...\n");
+			area.append("File too big to transfer...Exiting...\n");
 			return;
 		}
 		
@@ -175,7 +174,7 @@ public class Client {
 										sendPacket = com.createPacket(msg,interHostPort);
 										com.sendPacket(sendPacket, sendReceiveSocket);
 										if(mode == 1) {
-											com.verboseMode("Sent Packet:", sendPacket, area);
+											com.verboseMode("Sent:", sendPacket, area);
 											area.append("Terminating connection.\n");
 										}
 										break mainLoop;
@@ -520,6 +519,7 @@ public class Client {
 		
 		System.out.println("Select Operation: Read [0], Write[1]");
 		int rwMode = sc.nextInt();
+		
 		System.out.println("Type in file name with file extension i.e '.txt'");
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
         String fileName = null;
@@ -529,12 +529,17 @@ public class Client {
 			e.printStackTrace();
 		}
 		
-		sc.close();
+		
 		Client client = new Client();
 		if(rwMode == 0) {
+			sc.close();
 			client.readFile(fileName, "Ascii");
 		}else if (rwMode == 1) {
+			System.out.println("deny file read access at start? deny[0], allow[1]");
+			rest = sc.nextInt();
+			sc.close();
 			client.writeFile(fileName, "Ascii");
+			
 		}
 
 	}

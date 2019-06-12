@@ -434,7 +434,7 @@ public class ComFunctions {
 		byte[] packetData = packet.getData();
 		String verbose = "";
 		
-		verbose = verbose + "Packet " + status + "\n";
+		verbose = verbose + status + "\n";
 		if(packetData[0] ==  (byte)0 && packetData[1] == (byte)1) {
 			verbose += "RRQ; " + getFileName(packetData) + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)2) {
@@ -478,7 +478,7 @@ public class ComFunctions {
 		byte[] packetData = packet.getData();
 		String verbose = "";
 		
-		verbose = verbose + "Packet " + status + "\n";
+		verbose = verbose + status + "\n";
 		if(packetData[0] ==  (byte)0 && packetData[1] == (byte)1) {
 			verbose += "RRQ; " + getFileName(packetData) + "\n";
 		} else if (packetData[0] ==  (byte)0 && packetData[1] == (byte)2) {

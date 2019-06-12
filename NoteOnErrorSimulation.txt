@@ -1,0 +1,54 @@
+ERROR SIMULATION MODE: start intermediate host and also select 0 when client asks for ERROR Simulation Mode
+
+Error code 1:
+Wrq:
+when selecting the file to transfer to the server, choose a file that is not in ./Client/ folder
+Rrq:
+when selecting the file to transfer to the client, choose a file that is not in ./Server/ folder
+
+Simulating Error 1 in the middle of the transfer(use error simulation mode):
+The error simulator allows you to select how Long you want to wait before you delete the file that's created by the wrq or rrq request. For example if you're doing a rrq, a new file is created in ./Client/, in the error Sim, selecting 50 packet delay and OPTION 8, we can delete the newly created file after 50 packets have been sent through.
+STEPS:
+Select packet delay: number of packets to wait before deleting file 
+Select option: Delete File[8]
+Select option: 1 if deleting file created in server(wrq) and 2 if deleting file created in client(rrq)
+
+
+
+
+
+Error code 2(Access Violation):
+WRQ:
+The Client first checks to see if it has read access to the file its trying to transfer, if it doesn't the transfer is stopped before even sending the wrq request. TO SIMULATE a access violation in the server side, select any file from the AccessViolation folder by entering "AccessViolation/FILENAME.txt" when prompted for file to transfer
+
+RRQ:
+Scenario 1; The server doesn't have read access to the file: TO SIMULATE; use error simulation mode, select option 9, then when prompted for packet to simulate the error on SELECT 0 and SELECT 1 when asked for file in server or client (chose SERVER).
+Scenario 2: The client is writing to a folder it doesn't have write permissions for. TO SIMULATE: select any file from the AccessViolation folder by entering "AccessViolation/FILENAME.txt" when prompted for file to transfer
+
+TO CHANGE WRITE PERMISSION DURING THE TRANSFER(USE ERROR SIMULATION MODE):
+When asked by the error simulator, select CHANGE FILE ACCESS[9], select how many packets you want to wait until you restrict the files write permission, IF you are doing a WRQ select [1] and [2] if going RRQ.
+
+
+
+
+
+To Simulate Error Code 3 (Disk Full or allocation exceeded):
+Please run our eclipse project on a usb or partitioned harddrive that has little memory.
+Please ensure that the the file to be transfered is larger (file size) than the memory left
+in the USB stick or partitioned portion of the harddrive. You can do this by right clicking the file
+and clicking properties. Within properties, you can see the file size. 
+
+
+
+
+
+
+To Simulate Error Code 6 (File Already Exists):
+Please type in one the files that already exist within ./Server or ./Client respectively when prompted 
+Please note that when the client sends a write request, the file may already exist (there will be a message noting 
+that the file does already exist, but the program will not terminate). If the client sends a read request and the file
+already exists, then we will terminate the program after the detection. 
+
+Note: Error packet with error code 6 will only send when client does a write request and the file already exists, otherwise
+we will detect prior to sending the data, therefore no error packet is needed to notify
+ 

@@ -78,7 +78,7 @@ public class ServerWorker extends Thread {
 		byte [] fileByteReadArray = com.readFileIntoArray("./Server/" + fileName);
 		
 		try{
-			fileByteReadArray = Files.readAllBytes(Paths.get("./Server" + fileName));
+			fileByteReadArray = Files.readAllBytes(Paths.get("./Server/" + fileName));
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			if(mode==1) {
@@ -88,7 +88,7 @@ public class ServerWorker extends Thread {
 		    SendingResponse = com.createPacket(msg, interHostPort);
 		    com.sendPacket(SendingResponse,SendRecieveSocket);
 		    if(mode==1) {
-		    	System.out.println(com.verboseMode("Sending", SendingResponse));
+		    	System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 		    	System.out.println("Terminating server");
 		    }
 		    return;
@@ -98,7 +98,7 @@ public class ServerWorker extends Thread {
 			SendingResponse = com.createPacket(msg, interHostPort);
 			com.sendPacket(SendingResponse, SendRecieveSocket);
 			if(mode == 1) {
-				System.out.println(com.verboseMode("Sending", SendingResponse));
+				System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 		    	System.out.println("Terminating server");
 			}
 			return;
@@ -107,19 +107,19 @@ public class ServerWorker extends Thread {
 			SendingResponse = com.createPacket(msg, interHostPort);
 			com.sendPacket(SendingResponse, SendRecieveSocket);
 			if(mode == 1) {
-				System.out.println(com.verboseMode("Sending", SendingResponse));
+				System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 		    	System.out.println("Terminating server");
 			}
 			return;
 		}
 		
 		if(fileByteReadArray.length / 512 > 65535) {
-			System.out.println("File too big to transfering...Exiting...\n");
+			System.out.println("File too big to transfer...Exiting...\n");
 			msg = com.generateErrMessage(new byte[] {0,0}, "File too large to transfer");
 			SendingResponse = com.createPacket(msg, interHostPort);
 			com.sendPacket(SendingResponse,SendRecieveSocket);
 			if(mode == 1) {
-				System.out.println(com.verboseMode("Sending", SendingResponse));
+				System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 		    	System.out.println("Terminating server");
 			}
 			return;
@@ -154,7 +154,7 @@ public class ServerWorker extends Thread {
 										}
 										break innerSend;
 									}else {
-										System.out.println("Connection Lost, terminating client\n");
+										System.out.println("Connection Lost, terminating server\n");
 										break mainLoop;
 									}
 								}
@@ -302,7 +302,7 @@ public class ServerWorker extends Thread {
 			SendingResponse = com.createPacket(msg, interHostPort);
 			com.sendPacket(SendingResponse, SendRecieveSocket);
 			if(mode == 1) {
-				System.out.println(com.verboseMode("Sending", SendingResponse));
+				System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 		    	System.out.println("Terminating server");
 			}
 			return;
@@ -312,7 +312,7 @@ public class ServerWorker extends Thread {
 				SendingResponse = com.createPacket(msg, interHostPort);
 				com.sendPacket(SendingResponse,SendRecieveSocket);
 			    if(mode==1) {
-			    	System.out.println(com.verboseMode("Sending", SendingResponse));
+			    	System.out.println(com.verboseMode("Sending packet:", SendingResponse));
 			    	System.out.println("Terminating server");
 			    }
 			    return;
@@ -354,7 +354,7 @@ public class ServerWorker extends Thread {
 									}
 									break mainLoop;
 								}else {
-									System.out.println("Connection Lost, terminating client\n");
+									System.out.println("Connection Lost, terminating server\n");
 									break writeLoop;
 								}
 							}

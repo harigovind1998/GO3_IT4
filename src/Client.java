@@ -174,7 +174,7 @@ public class Client {
 										sendPacket = com.createPacket(msg,interHostPort);
 										com.sendPacket(sendPacket, sendReceiveSocket);
 										if(mode == 1) {
-											com.verboseMode("Sent:", sendPacket, area);
+											com.verboseMode("Sent Packet:", sendPacket, area);
 											area.append("Terminating connection.\n");
 										}
 										break mainLoop;
@@ -309,7 +309,7 @@ public class Client {
 		while(true) {
 			com.sendPacket(sendPacket, sendReceiveSocket);
 			if (mode == 1) {
-				com.verboseMode("Sent", sendPacket, area);
+				com.verboseMode("Sent packet:", sendPacket, area);
 			}
 			
 			innerLoop:
@@ -383,7 +383,7 @@ public class Client {
 						sendPacket = com.createPacket(msg, interHostPort);
 						com.sendPacket(sendPacket, sendReceiveSocket);
 						if(mode == 1) {
-							System.out.println(com.verboseMode("Sending", sendPacket));
+							System.out.println(com.verboseMode("Sending packet:", sendPacket));
 					    	System.out.println("Terminating server");
 						}
 						return;
@@ -392,7 +392,7 @@ public class Client {
 						sendPacket = com.createPacket(msg, interHostPort);
 						com.sendPacket(sendPacket, sendReceiveSocket);
 						if(mode == 1) {
-							System.out.println(com.verboseMode("Sending", sendPacket));
+							System.out.println(com.verboseMode("Sending packet:", sendPacket));
 					    	System.out.println("Terminating server");
 						}
 						return;
@@ -402,7 +402,7 @@ public class Client {
 							sendPacket = com.createPacket(msg, interHostPort);
 							com.sendPacket(sendPacket,sendReceiveSocket);
 						    if(mode==1) {
-						    	System.out.println(com.verboseMode("Sending", sendPacket));
+						    	System.out.println(com.verboseMode("Sending packet", sendPacket));
 						    	System.out.println("Terminating server");
 						    }
 						    return;
@@ -415,7 +415,7 @@ public class Client {
 					if(recievePacket.getLength()<512){ //Checks for if the Data Packet is the last packet
 						com.sendPacket(sendPacket, sendReceiveSocket);
 						if(mode == 1) {
-							com.verboseMode("Sent", sendPacket,area);
+							com.verboseMode("Sent packet:", sendPacket,area);
 						}
 						area.append("End of file reached\n");
 						break outerloop; //End of file receive so breaks out of all loops

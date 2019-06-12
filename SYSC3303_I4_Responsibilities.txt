@@ -1,0 +1,37 @@
+Breakdown Of Responsibilities 
+
+Iteration 0:
+Used Hari's Assignment 1 as a base for Iteration 0.
+
+Steven -> Established WRQ and RRQ to be sent to the host from client and able to send DATA blocks when WRQ is sent
+Hari -> Receive RRQ from host and send DATA block to host to be sent to client
+Tarun -> Receive WRQ from host and send ACK block to host to be sent to client
+Yohannes -> Create verbose mode and have client able to send ACKs when RRQ is sent 
+
+Iteration 1: 
+
+Steven -> Clean up client to be thread safe, developed GUI that supports multi-threading
+Hari -> Allowed server to handle multiple clients and hosts safely along with cleaning up server, created systematic exit
+Tarun -> Clean up server and assisted with multi-threading on server side
+Yohannes -> Clean up client 
+
+Iteration 2:
+
+Steven -> Transform IntermediateHost to error simulator and simulate the 3 errors along with keeping a normal mode
+Hari -> Tweaked Client and server to be able to handle the 3 type of errors 
+Tarun -> Tweaked Server to handle 2 of 3 types of errors
+Yohannes -> Tweaked Server to handle 1 of 3 types of errors as well as created diagrams
+
+Iteration 3:
+
+Steven -> Created parseForError method in ComFunctions to check for error type 4
+Hari -> Tweaked Client and server to be able to detect error type 5
+Tarun -> Created diagrams as well as done testing to help debug
+Yohannes -> Created diagrams as well as validated program satisfies Iteration 3 requirements
+
+Iteration 4: 
+
+Steven -> Updated verbose mode to handle new errors, helped debug client and server and created diagrams
+Hari -> Tweaked client and server to be able to detect error type 1, 2, 3, 6
+Tarun -> Created diagrams (Use Case & State) as well as done testing to help debug
+Yohannes -> Created diagrams (Sequence)
